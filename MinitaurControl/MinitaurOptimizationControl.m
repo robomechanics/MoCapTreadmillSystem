@@ -55,7 +55,7 @@ function MinitaurOptimizationControl_OpeningFcn(hObject, eventdata, handles, var
 
 % USER INPUTS
 % set to false to run gui without Optitrack Connection, for debugging only
-handles.optiDataConnection = false;
+handles.optiDataConnection = true;
 %elliePi IP Address and Port
 serverAddress = '128.237.247.36';
 port = 50000;
@@ -79,6 +79,7 @@ handles.restartOpt = false;
 handles.fwdVel = 0.0;
 handles.angVel = 0.0;
 handles.stHgt = 0.0;
+%Optimization Variables
 handles.P1 = 1.5; % stance height (extDes)
 handles.P2 = 0.3; % min extenion in retraction (extMin)
 handles.P3 = 0.0;
@@ -86,13 +87,18 @@ handles.P4 = 0.0;
 handles.P5 = 0.0;
 handles.P6 = 0.0;
 handles.P7 = 0.0;
+handles.numOptVars = 2;
+handles.maxNumOptVars = 7;
+%Treadmill Refernces
 handles.zRef = 0.620;
 handles.yawRef = 1.5;
 handles.yawCenterLimit = 1.5; %deg
 handles.zCenterLimit = 0.02; %meters
-handles.timeToSS = 2.0; %sec
-handles.trialLength = 4; %meters
-handles.numOptVars = 2; 
+%Optimization Trial Variables
+handles.timeToSS = 1.0; %sec
+handles.trialLength = 0.2; %meters
+
+
 
 % Set initial gain values
 handles.KpZpos = 100.0;
@@ -184,7 +190,8 @@ else
         angVel = cmdData.cmd;
     end
 
-    optParams = [handles.P1 handles.P2];
+    optParams = [handles.P1 handles.P2 handles.P3 handles.P4 handles.P5 ...
+        handles.P6 handles.P7];
     
     % Check if robot control is on
     if handles.robotOn
@@ -396,12 +403,12 @@ case 'Gait Optimization'
     handles.mode = 3;
     handles.optData = matfile(handles.optDataFile, 'Writable', true);
     handles.optData.cost = 0;
-    handles.optData.gait = [0 0];
+    handles.optData.gait = [0 0 0 0 0 0 0];
 case 'Cont. Gait Optimization'
     handles.mode = 4;
     handles.optData = matfile(handles.optDataFile, 'Writable', true);
     handles.optData.cost = 0;
-    handles.optData.gait = [0 0];
+    handles.optData.gait = [0 0 0 0 0 0 0];
 end
 guidata(hObject, handles);
 end         

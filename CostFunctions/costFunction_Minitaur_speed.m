@@ -1,13 +1,13 @@
 
 function cost = costFunction_Minitaur_speed(x, hObject)
 
-optGaitParams = [x(1) x(2)];
+optGaitParams = [x(1) x(2) 0.0 0.0 0.0 0.0 0.0];
 disp('New Gait Parameters')
 disp(optGaitParams)
 %optGaitParams = [dutyFactor, period, thetaDown, thetaSlow, Kp, Kd];
 %gait used for recentering
 %regGaitParams = [height extMin];
-regGaitParams = [1.5 0.3];
+regGaitParams = [1.5 0.3 0.0 0.0 0.0 0.0 0.0];
 optState = 'restart';
 trialActive = true;
 
@@ -40,7 +40,7 @@ while(trialActive)
                
         case 'pause' % pause trial
             %stop robot and set regular params
-            cmdPacket = [0.0 0.0 regGaitParams];
+            cmdPacket = [0.0 0.0 regGaitParams ];
             fwrite(handles.tcpObj, cmdPacket,'double');
             
             if ~handles.pauseOpt
@@ -48,6 +48,7 @@ while(trialActive)
             end
             
         case 'recenter' % Recenter robot for trial
+            disp('recenter')
             % Calculate yaw command and check if centered on treadmill
             [cmdData, handles] = calcYawCmd(handles);
 
@@ -64,6 +65,7 @@ while(trialActive)
             end
 
         case 'trailToSS' % Get to steady state operation of gait
+            disp('trailToSS')
             % Calculate yaw command and check if centered on treadmill
             [cmdData, handles] = calcYawCmd(handles);
             
@@ -86,13 +88,14 @@ while(trialActive)
 
         case 'trialRecord' % Record trial and calculate cost
             % Calculate yaw command and check if centered on treadmill
+            disp('trialRecord')
             [cmdData, handles] = calcYawCmd(handles);
             
             % Get treadmill data
             [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
             
             % Get power data
-            powerData = fread(handles.tcpObj,2,'float32');
+            powerData = fread(handles.tcpObj,2,'float32')
             
             % Calculate total time and distance
             totalTime = totalTime + dt;

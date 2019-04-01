@@ -69,9 +69,11 @@ handles.rec = false;
 t = 0;
 
 % Init Optitrack Controller Gains
-handles.Kp = 2.0;
+handles.Kp = 1.2;
 handles.Kd = 0.05;
-handles.Ki = 0.1;
+handles.Ki = 0.2;
+%miniRHex Controller Gains
+%Kp = 2.0, Kd = 0.05, Ki = 0.1
 
 % Init Optitrack Reference Positions
 handles.xRef = 0.0; %meters
