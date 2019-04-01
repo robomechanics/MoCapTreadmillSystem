@@ -1,6 +1,8 @@
 
 function cost = costFunction_Minitaur_speed(x, hObject)
 
+handles = guidata(hObject);
+
 optGaitParams = [x(1) x(2) 0.0 0.0 0.0 0.0 0.0];
 disp('New Gait Parameters')
 disp(optGaitParams)
@@ -9,6 +11,13 @@ disp(optGaitParams)
 %regGaitParams = [height extMin];
 regGaitParams = [1.5 0.3 0.0 0.0 0.0 0.0 0.0];
 optState = 'restart';
+
+%check if params are in bounds
+if x(1) < handles.PLowBound(1) || x(1) > handles.PUpBound(1) || x(2) < handles.PLowBound(2) || x(2) > handles.PUpBound(2)
+    optState = 'fail';
+else
+    optState = 'restart';
+end
 trialActive = true;
 
 while(trialActive)   
@@ -119,6 +128,31 @@ while(trialActive)
                 cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];
                 fwrite(handles.tcpObj, cmdPacket,'double');
             end
+        case 'fail' %Case out of bounds, return high cost
+            
+            %stop optimization gait
+            cmdPacket = [0.0 0.0 regGaitParams];
+            fwrite(handles.tcpObj, cmdPacket,'double');
+            
+            trialActive = false;
+            
+            if x(1) < handles.PLowBound(1)
+                diff1 = handles.PLowBound(1) - x(1); 
+            elseif x(1) > handles.PUpBound(1)
+                diff1 = x(1) - handles.PUpBound(1);
+            else
+                diff1 = 0;
+            end
+            
+            if x(2) < handles.PLowBound(2)
+                diff2 = handles.PLowBound(2) - x(2);
+            elseif x(2) > handles.PUpBound(2)
+                diff2 = x(2) - handles.PUpBound(2);
+            else
+                diff2 = 0;
+            end
+            
+            cost = 100*diff1+100*diff2;
 
     end
     

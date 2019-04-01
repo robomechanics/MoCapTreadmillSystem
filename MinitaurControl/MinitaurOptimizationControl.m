@@ -89,6 +89,8 @@ handles.P6 = 0.0;
 handles.P7 = 0.0;
 handles.numOptVars = 2;
 handles.maxNumOptVars = 7;
+handles.PUpBound = [2 1 99999 99999 99999 99999 99999];
+handles.PLowBound = [1 0 -99999 -99999 -99999 -99999 -99999];
 %Treadmill Refernces
 handles.zRef = 0.620;
 handles.yawRef = 1.5;
@@ -97,8 +99,6 @@ handles.zCenterLimit = 0.02; %meters
 %Optimization Trial Variables
 handles.timeToSS = 1.0; %sec
 handles.trialLength = 0.2; %meters
-
-
 
 % Set initial gain values
 handles.KpZpos = 100.0;
