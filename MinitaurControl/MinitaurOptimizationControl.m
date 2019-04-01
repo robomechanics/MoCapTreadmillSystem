@@ -86,13 +86,15 @@ handles.P4 = 0.0;
 handles.P5 = 0.0;
 handles.P6 = 0.0;
 handles.P7 = 0.0;
+handles.PUpBound = [2 1 99999 99999 99999 99999 99999];
+handles.PLowBound = [1 0 -99999 -99999 -99999 -99999 -99999];
 handles.zRef = 0.620;
 handles.yawRef = 1.5;
 handles.yawCenterLimit = 1.5; %deg
 handles.zCenterLimit = 0.02; %meters
 handles.timeToSS = 2.0; %sec
 handles.trialLength = 4; %meters
-handles.numOptVars = 2; 
+handles.numOptVars = 2;
 
 % Set initial gain values
 handles.KpZpos = 100.0;
