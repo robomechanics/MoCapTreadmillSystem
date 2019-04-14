@@ -57,7 +57,7 @@ function MinitaurOptimizationControl_OpeningFcn(hObject, eventdata, handles, var
 % set to false to run gui without Optitrack Connection, for debugging only
 handles.optiDataConnection = true;
 %elliePi IP Address and Port
-serverAddress = '128.237.247.36';
+serverAddress = '128.237.228.243';
 port = 50000;
 
 % Setup TCP connection to robot
@@ -80,30 +80,31 @@ handles.fwdVel = 0.0;
 handles.angVel = 0.0;
 handles.stHgt = 0.0;
 %Optimization Variables
-handles.P1 = 1.5; % stance height (extDes)
+handles.P1 = 2.0; % stance height (extDes)
 handles.P2 = 0.3; % min extenion in retraction (extMin)
-handles.P3 = 0.0;
+handles.P3 = 0.009;
 handles.P4 = 0.0;
 handles.P5 = 0.0;
 handles.P6 = 0.0;
 handles.P7 = 0.0;
 handles.numOptVars = 2;
 handles.maxNumOptVars = 7;
-handles.PUpBound = [2 1 99999 99999 99999 99999 99999];
+handles.PUpBound = [2.5 .5 99999 99999 99999 99999 99999];
 handles.PLowBound = [1 0 -99999 -99999 -99999 -99999 -99999];
 %Treadmill Refernces
-handles.zRef = 0.620;
-handles.yawRef = 1.5;
+handles.zRef = 0.48;
+handles.yawRef = 0.0;
 handles.yawCenterLimit = 1.5; %deg
 handles.zCenterLimit = 0.02; %meters
 %Optimization Trial Variables
-handles.timeToSS = 1.0; %sec
-handles.trialLength = 0.2; %meters
+handles.timeToSS = 2.0; %sec
+handles.trialLength = 5.0; %meters
+handles.reverseDirection = true; %reverse positive direction of treadmill (for running backwards)
 
 % Set initial gain values
-handles.KpZpos = 100.0;
+handles.KpZpos = 0.09;
 handles.KdZpos = 0.0;
-handles.KpYaw = -1.5;
+handles.KpYaw = .001;
 handles.KdYaw = 0.0;
 
 % Set shared filenames and sizes
@@ -114,6 +115,7 @@ handles.treadSize = 5;
 
 % Set optimization data filename
 handles.optDataFile = 'optData';
+handles.trialDataFile = 'trialData';
 
 % Read in old simplex - used for Cont. Gait Opt only
 % TODO: add load in after selecting Cont Gait Opt
@@ -138,7 +140,7 @@ set(handles.editP6, 'String',  handles.P7);
 
 % Set Manual Control Limits
 handles.fwdVelLimit = 1.0;
-handles.angVelLimit = 1.0;
+handles.angVelLimit = 0.03;
 
 % Setup shared data file for mocap and treadmill data
 if handles.optiDataConnection
@@ -147,7 +149,7 @@ if handles.optiDataConnection
 end
 
 %Create timer
-handles.t_update = timer('TimerFcn',{@updateData,hObject}, 'Period',1/100,'ExecutionMode','fixedRate','BusyMode','queue');
+handles.t_update = timer('TimerFcn',{@updateData,hObject}, 'Period',1/30,'ExecutionMode','fixedRate','BusyMode','queue');
 
 % Choose default command line output for MinitaurOptimizationControl
 handles.output = hObject;
@@ -404,11 +406,25 @@ case 'Gait Optimization'
     handles.optData = matfile(handles.optDataFile, 'Writable', true);
     handles.optData.cost = 0;
     handles.optData.gait = [0 0 0 0 0 0 0];
+    handles.trialData = matfile(handles.trialDataFile, 'Writable', true);
+    handles.trialData.dt = 0;
+    handles.trialData.dist = 0;
+    handles.trialData.energy = 0;
+    handles.trialData.voltage = 0;
+    handles.trialData.current = 0;
+    handles.trialData.totalEnergy = 0;
 case 'Cont. Gait Optimization'
     handles.mode = 4;
     handles.optData = matfile(handles.optDataFile, 'Writable', true);
     handles.optData.cost = 0;
     handles.optData.gait = [0 0 0 0 0 0 0];
+    handles.trialData = matfile(handles.trialDataFile, 'Writable', true);
+    handles.trialData.dt = 0;
+    handles.trialData.dist = 0;
+    handles.trialData.energy = 0;
+    handles.trialData.voltage = 0;
+    handles.trialData.current = 0;
+    handles.trialData.totalEnergy = 0;
 end
 guidata(hObject, handles);
 end         

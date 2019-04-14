@@ -9,8 +9,10 @@ disp(optGaitParams)
 %optGaitParams = [dutyFactor, period, thetaDown, thetaSlow, Kp, Kd];
 %gait used for recentering
 %regGaitParams = [height extMin];
-regGaitParams = [1.5 0.3 0.0 0.0 0.0 0.0 0.0];
+regGaitParams = [2 0.4 0.0 0.0 0.0 0.0 0.0];
 optState = 'restart';
+maxTempVal = 70.0;
+restartTempVal = 45.0;
 
 %check if params are in bounds
 if x(1) < handles.PLowBound(1) || x(1) > handles.PUpBound(1) || x(2) < handles.PLowBound(2) || x(2) > handles.PUpBound(2)
@@ -28,8 +30,21 @@ while(trialActive)
 
     %get updated handles struct
     handles = guidata(hObject);
-
-    if handles.pauseOpt
+    
+    tcpData = fread(handles.tcpObj,4,'float32');
+    while handles.tcpObj.BytesAvailable > 100
+        tcpData = fread(handles.tcpObj,4,'float32');
+        disp('num Bytes')
+        disp(handles.tcpObj.BytesAvailable)
+    end
+    voltage = tcpData(1);
+    current = tcpData(2);
+    motorTempFlag = tcpData(3);
+    maxMotorTemp = tcpData(4);
+    
+    if motorTempFlag == 1 || maxMotorTemp > maxTempVal || strcmp(optState,'coolDown')
+       optState = 'coolDown';
+    elseif handles.pauseOpt
         if ~strcmp(optState,'pause')
             lastState = optState;
         end
@@ -44,6 +59,7 @@ while(trialActive)
             % init values
             totalTime = 0.0;
             totalDist = 0.0;
+            totalEnergy = 0.0;
             handles.restartOpt = false;
             optState = 'recenter';
                
@@ -57,7 +73,6 @@ while(trialActive)
             end
             
         case 'recenter' % Recenter robot for trial
-            disp('recenter')
             % Calculate yaw command and check if centered on treadmill
             [cmdData, handles] = calcYawCmd(handles);
 
@@ -74,7 +89,6 @@ while(trialActive)
             end
 
         case 'trailToSS' % Get to steady state operation of gait
-            disp('trailToSS')
             % Calculate yaw command and check if centered on treadmill
             [cmdData, handles] = calcYawCmd(handles);
             
@@ -92,27 +106,37 @@ while(trialActive)
             if totalTime >= handles.timeToSS
                 totalTime = 0.0;
                 totalDist = 0.0;
+                totalEnergy = 0.0;
                 optState = 'trialRecord';
             end
 
         case 'trialRecord' % Record trial and calculate cost
             % Calculate yaw command and check if centered on treadmill
-            disp('trialRecord')
             [cmdData, handles] = calcYawCmd(handles);
             
             % Get treadmill data
             [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
             
-            % Get power data
-            powerData = fread(handles.tcpObj,2,'float32')
+            if handles.reverseDirection
+                dist = -dist;
+            end
             
             % Calculate total time and distance
             totalTime = totalTime + dt;
             totalDist = totalDist + dist;
+            currEnergy = voltage*current*dt;
+            totalEnergy = totalEnergy + currEnergy;
+            [rows,cols] = size(handles.trialData, 'dt');
+            handles.trialData.dt(rows+1,:) = dt;
+            handles.trialData.dist(rows+1,:) = dist;
+            handles.trialData.energy(rows+1,:) = currEnergy;
+            handles.trialData.voltage(rows+1,:) = voltage;
+            handles.trialData.current(rows+1,:) = current;
+            handles.trialData.totalEnergy(rows+1,:) = totalEnergy;
 
             % check if trial is complete & update robot
             if totalDist >= handles.trialLength
-                cost = 1/(totalDist/totalTime);
+                cost = (totalEnergy/totalTime)/totalDist;
                 [rows,cols] = size(handles.optData, 'cost');
                 handles.optData.cost(rows+1,:) = cost;
                 handles.optData.gait(rows+1,:) = optGaitParams;
@@ -153,6 +177,15 @@ while(trialActive)
             end
             
             cost = 100*diff1+100*diff2;
+            
+        case 'coolDown' %motor temps to high, let them cool down    
+            disp('cooldown')
+            cmdPacket = [0.0 0.0 regGaitParams ];
+            fwrite(handles.tcpObj, cmdPacket,'double');
+            disp(maxMotorTemp)
+            if maxMotorTemp < restartTempVal 
+                optState = 'restart';
+            end
 
     end
     
