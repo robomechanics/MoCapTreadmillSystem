@@ -74,6 +74,7 @@ function FrameReadyCallback(src, event)
     
     
     frameDiff = (frameID - lastFrameID);
+    
     % Check if new frame of data
     if frameDiff > 0
         % Send data to file

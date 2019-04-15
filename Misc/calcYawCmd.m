@@ -1,14 +1,21 @@
 function [dataOut, handles] = calcYawCmd(handles)
 
 persistent cmdData;
+persistent lastFrameID;
 
 % Check if data file is ready to be read
 if handles.memMoCap.Data(1) == (handles.moCapSize-1)
     
     %Read in data from Optitrack
     [frameRate, frameID, pos, eulerDeg] = getMoCapData(handles.memMoCap, handles.moCapSize); 
-    dt = getDeltaTime(frameRate, frameID);
     
+    % Init frame id
+    if isempty(lastFrameID)
+        lastFrameID = frameID;
+    end
+    
+    dt = getDeltaTime(frameRate, frameID, lastFrameID);
+    lastFrameID = frameID;
     % Set text displays to view data
     set(handles.textXpos, 'String', pos(1));
     set(handles.textYpos, 'String', pos(2));

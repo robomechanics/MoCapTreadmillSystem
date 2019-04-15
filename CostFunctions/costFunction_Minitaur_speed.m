@@ -68,7 +68,7 @@ while(trialActive)
             cmdPacket = [0.0 0.0 regGaitParams ];
             fwrite(handles.tcpObj, cmdPacket,'double');
             
-            if ~handles.pauseOpt
+            if ~handles.pauseOpt 
                 optState = lastState;
             end
             
@@ -82,6 +82,7 @@ while(trialActive)
                 cmdPacket = [0.0 0.0 regGaitParams];
                 fwrite(handles.tcpObj, cmdPacket,'double');
                 optState = 'trailToSS';
+                disp('trailToSS')
             else
                 %recenter robot with regular params
                 cmdPacket = [handles.fwdVel cmdData.cmd regGaitParams];
@@ -108,6 +109,7 @@ while(trialActive)
                 totalDist = 0.0;
                 totalEnergy = 0.0;
                 optState = 'trialRecord';
+                disp('trialRecord')
             end
 
         case 'trialRecord' % Record trial and calculate cost
