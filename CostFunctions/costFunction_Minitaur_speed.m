@@ -31,16 +31,17 @@ while(trialActive)
     %get updated handles struct
     handles = guidata(hObject);
     
-    tcpData = fread(handles.tcpObj,4,'float32');
+    tcpData = fread(handles.tcpObj,5,'float32');
     while handles.tcpObj.BytesAvailable > 100
-        tcpData = fread(handles.tcpObj,4,'float32');
+        tcpData = fread(handles.tcpObj,5,'float32');
         disp('num Bytes')
         disp(handles.tcpObj.BytesAvailable)
     end
     voltage = tcpData(1);
     current = tcpData(2);
-    motorTempFlag = tcpData(3);
-    maxMotorTemp = tcpData(4);
+    pTime = tcpData(3);
+    motorTempFlag = tcpData(4);
+    maxMotorTemp = tcpData(5);
     
     if motorTempFlag == 1 || maxMotorTemp > maxTempVal || strcmp(optState,'coolDown')
        optState = 'coolDown';
@@ -60,6 +61,7 @@ while(trialActive)
             totalTime = 0.0;
             totalDist = 0.0;
             totalEnergy = 0.0;
+            pTimeLast = pTime;
             handles.restartOpt = false;
             optState = 'recenter';
                
@@ -101,7 +103,7 @@ while(trialActive)
             [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
             
             % Calculate total time
-            totalTime = totalTime + dt;
+            totalTime = totalTime + dt
                 
             %start recording once at steady state
             if totalTime >= handles.timeToSS
@@ -126,7 +128,8 @@ while(trialActive)
             % Calculate total time and distance
             totalTime = totalTime + dt;
             totalDist = totalDist + dist;
-            currEnergy = voltage*current*dt;
+            pdt = pTime - pTimeLast
+            currEnergy = voltage*current*pdt;
             totalEnergy = totalEnergy + currEnergy;
             [rows,cols] = size(handles.trialData, 'dt');
             handles.trialData.dt(rows+1,:) = dt;
@@ -135,6 +138,7 @@ while(trialActive)
             handles.trialData.voltage(rows+1,:) = voltage;
             handles.trialData.current(rows+1,:) = current;
             handles.trialData.totalEnergy(rows+1,:) = totalEnergy;
+            handles.trialData.pdt(rows+1,:) = pdt;
 
             % check if trial is complete & update robot
             if totalDist >= handles.trialLength
@@ -190,6 +194,8 @@ while(trialActive)
             end
 
     end
+    
+    pTimeLast = pTime;
     
     % Update handles structure
     guidata(hObject, handles);

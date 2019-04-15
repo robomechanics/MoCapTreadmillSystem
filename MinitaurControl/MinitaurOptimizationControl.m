@@ -413,6 +413,7 @@ case 'Gait Optimization'
     handles.trialData.voltage = 0;
     handles.trialData.current = 0;
     handles.trialData.totalEnergy = 0;
+    handles.trialData.pdt = 0;
 case 'Cont. Gait Optimization'
     handles.mode = 4;
     handles.optData = matfile(handles.optDataFile, 'Writable', true);
@@ -425,6 +426,7 @@ case 'Cont. Gait Optimization'
     handles.trialData.voltage = 0;
     handles.trialData.current = 0;
     handles.trialData.totalEnergy = 0;
+    handles.trialData.pdt = 0;
 end
 guidata(hObject, handles);
 end         
