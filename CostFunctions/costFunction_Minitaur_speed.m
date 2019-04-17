@@ -103,7 +103,7 @@ while(trialActive)
             [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
             
             % Calculate total time
-            totalTime = totalTime + dt
+            totalTime = totalTime + dt;
                 
             %start recording once at steady state
             if totalTime >= handles.timeToSS
@@ -128,7 +128,7 @@ while(trialActive)
             % Calculate total time and distance
             totalTime = totalTime + dt;
             totalDist = totalDist + dist;
-            pdt = pTime - pTimeLast
+            pdt = pTime - pTimeLast;
             currEnergy = voltage*current*pdt;
             totalEnergy = totalEnergy + currEnergy;
             [rows,cols] = size(handles.trialData, 'dt');
