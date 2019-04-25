@@ -2,16 +2,24 @@
 clear;
 close all;
 
-load 'trialDataTest1.mat'
+load 'trialData.mat'
+
+
 
 figure(1)
 plot(totalEnergy)
+startTime = [1 592 1157];
+endTime = [591 1156 1706];
+for iT = 1:length(startTime)
+    for ii = startTime(iT):endTime(iT)
+        sumDist(iT,ii) = sum(dist(startTime(iT):ii));
+        totalTime(iT,ii) = sum(pdt(startTime(iT):ii));
+        cost(iT,ii) = (totalEnergy(ii))/sumDist(ii);
 
-for ii = 1:292
-    sumDist(ii) = sum(dist(1:ii));
-    totalTime(ii) = sum(pdt(1:ii));
-    cost(ii) = (totalEnergy(ii)/totalTime(ii))/sumDist(ii);
-    
+    end
 end
 figure(2)
-plot(cost)
+hold on;
+for iT = 1:length(startTime)
+    plot(cost(iT,:))
+end
