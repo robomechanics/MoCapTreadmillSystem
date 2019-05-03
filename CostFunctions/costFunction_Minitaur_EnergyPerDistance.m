@@ -32,17 +32,22 @@ while(trialActive)
     handles = guidata(hObject);
     
     try
-        tcpData = fread(handles.tcpObj,5,'float32');
-        while handles.tcpObj.BytesAvailable > 100
+        if handles.tcpObj.BytesAvailable >= 20
             tcpData = fread(handles.tcpObj,5,'float32');
-            disp('num Bytes')
+            while handles.tcpObj.BytesAvailable > 100
+                tcpData = fread(handles.tcpObj,5,'float32');
+                disp('num Bytes')
+                disp(handles.tcpObj.BytesAvailable)
+            end
+            voltage = tcpData(1);
+            current = tcpData(2);
+            pTime = tcpData(3);
+            motorTempFlag = tcpData(4);
+            maxMotorTemp = tcpData(5);
+        else
+            disp('not enough bytes')
             disp(handles.tcpObj.BytesAvailable)
         end
-        voltage = tcpData(1);
-        current = tcpData(2);
-        pTime = tcpData(3);
-        motorTempFlag = tcpData(4);
-        maxMotorTemp = tcpData(5);
     catch
         disp('failed to read')
         disp(handles.tcpObj.BytesAvailable)
