@@ -10,9 +10,17 @@ disp(optGaitParams)
 %gait used for recentering
 %regGaitParams = [height extMin];
 regGaitParams = [2 0.4 0.0 0.0 0.0 0.0 0.0];
+coolDownGaitParams = [0.45 0.4 0.0 0.0 0.0 0.0 0.0];
 optState = 'restart';
 maxTempVal = 70.0;
 restartTempVal = 45.0;
+
+%init tcp data
+voltage = 0.0;
+current = 0.0;
+pTime = 0.0;
+motorTempFlag = 0;
+maxMotorTemp = 0.0;
 
 %check if params are in bounds
 if x(1) < handles.PLowBound(1) || x(1) > handles.PUpBound(1) || x(2) < handles.PLowBound(2) || x(2) > handles.PUpBound(2)
@@ -200,7 +208,7 @@ while(trialActive)
             
         case 'coolDown' %motor temps to high, let them cool down    
             disp('cooldown')
-            cmdPacket = [0.0 0.0 regGaitParams ];
+            cmdPacket = [0.0 0.0 coolDownGaitParams ];
             fwrite(handles.tcpObj, cmdPacket,'double');
             disp(maxMotorTemp)
             if maxMotorTemp < restartTempVal 

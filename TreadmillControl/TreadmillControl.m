@@ -69,11 +69,11 @@ handles.rec = false;
 t = 0;
 
 % Init Optitrack Controller Gains
-handles.Kp = 1.2;
-handles.Kd = 0.05;
-handles.Ki = 0.2;
+handles.Kp = 1.5;
+handles.Kd = 0.1;
+handles.Ki = 0.11;
 %miniRHex Controller Gains
-%Kp = 2.0, Kd = 0.05, Ki = 0.1
+%Kp = 2.0, Kd = 0.05, Ki = 0.1 %old gains, controller has changed since
 
 % Init Optitrack Reference Positions
 handles.xRef = 0.0; %meters
@@ -213,16 +213,16 @@ if handles.memMoCap.Data(1) == (handles.moCapSize-1)
             end
             % Position Command Loop with Deadband
             if pastDeadband
-                if abs(eX) <= 0.1 * handles.posDeadband
+                if abs(eX) <= handles.posDeadband
                     posCmd = 0.0;
                     pastDeadband = false;
                 else
-                    posCmd = Kp * eX;
+                    posCmd = Kp * eX -sign(eX)*handles.posDeadband;
                 end
             else
                 if abs(eX) >= handles.posDeadband
                     pastDeadband = true;
-                    posCmd = Kp * eX;
+                    posCmd = Kp * eX -sign(eX)*handles.posDeadband;
                 else
                     posCmd = 0.0;
                 end
@@ -231,7 +231,7 @@ if handles.memMoCap.Data(1) == (handles.moCapSize-1)
             if abs(eDotX) <= handles.velDeadband
                 velCmd = 0.0;
             else
-                velCmd = Kd*eDotX;
+                velCmd = Kd*eDotX -sign(eDotX)*handles.velDeadband;
             end
             
             % absement command
