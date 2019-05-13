@@ -205,7 +205,8 @@ else
     end
     
     %Send signal to robot
-    fwrite(handles.tcpObj, cmdPacket,'double');
+    sendData_sync(handles.tcpObj, cmdPacket);
+    %fwrite(handles.tcpObj, cmdPacket,'double');
 
 end
 

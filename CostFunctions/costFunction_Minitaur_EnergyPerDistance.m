@@ -87,7 +87,8 @@ while(trialActive)
         case 'pause' % pause trial
             %stop robot and set regular params
             cmdPacket = [0.0 0.0 regGaitParams ];
-            fwrite(handles.tcpObj, cmdPacket,'double');
+            sendData_sync(handles.tcpObj, cmdPacket);
+            %fwrite(handles.tcpObj, cmdPacket,'double');
             
             if ~handles.pauseOpt 
                 optState = lastState;
@@ -101,13 +102,15 @@ while(trialActive)
             if ~isnan(cmdData.attError) && abs(cmdData.attError) <=  handles.yawCenterLimit && abs(cmdData.posError) <= handles.zCenterLimit
                 %stop robot and wait for trial to begin
                 cmdPacket = [0.0 0.0 regGaitParams];
-                fwrite(handles.tcpObj, cmdPacket,'double');
+                sendData_sync(handles.tcpObj, cmdPacket);
+                %fwrite(handles.tcpObj, cmdPacket,'double');
                 optState = 'trailToSS';
                 disp('trailToSS')
             else
                 %recenter robot with regular params
                 cmdPacket = [handles.fwdVel cmdData.cmd regGaitParams];
-                fwrite(handles.tcpObj, cmdPacket,'double');
+                sendData_sync(handles.tcpObj, cmdPacket);
+                %fwrite(handles.tcpObj, cmdPacket,'double');
             end
 
         case 'trailToSS' % Get to steady state operation of gait
@@ -116,7 +119,8 @@ while(trialActive)
             
             %command optimization gait
             cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];
-            fwrite(handles.tcpObj, cmdPacket,'double');
+            sendData_sync(handles.tcpObj, cmdPacket);
+            %fwrite(handles.tcpObj, cmdPacket,'double');
 
             % Get treadmill data
             [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
@@ -174,17 +178,20 @@ while(trialActive)
                 
                 %stop optimization gait
                 cmdPacket = [0.0 0.0 optGaitParams];
-                fwrite(handles.tcpObj, cmdPacket,'double');
+                sendData_sync(handles.tcpObj, cmdPacket);
+                %fwrite(handles.tcpObj, cmdPacket,'double');
             else
                 %command optimization gait
                 cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];
-                fwrite(handles.tcpObj, cmdPacket,'double');
+                sendData_sync(handles.tcpObj, cmdPacket);
+                %fwrite(handles.tcpObj, cmdPacket,'double');
             end
         case 'fail' %Case out of bounds, return high cost
             
             %stop optimization gait
             cmdPacket = [0.0 0.0 regGaitParams];
-            fwrite(handles.tcpObj, cmdPacket,'double');
+            sendData_sync(handles.tcpObj, cmdPacket);
+            %fwrite(handles.tcpObj, cmdPacket,'double');
             
             trialActive = false;
             
@@ -209,7 +216,8 @@ while(trialActive)
         case 'coolDown' %motor temps to high, let them cool down    
             disp('cooldown')
             cmdPacket = [0.0 0.0 coolDownGaitParams ];
-            fwrite(handles.tcpObj, cmdPacket,'double');
+            sendData_sync(handles.tcpObj, cmdPacket);
+            %fwrite(handles.tcpObj, cmdPacket,'double');
             disp(maxMotorTemp)
             if maxMotorTemp < restartTempVal 
                 optState = 'restart';
