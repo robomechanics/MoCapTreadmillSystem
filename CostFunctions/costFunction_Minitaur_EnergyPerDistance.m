@@ -3,14 +3,14 @@ function cost = costFunction_Minitaur_EnergyPerDistance(x, hObject)
 
 handles = guidata(hObject);
 
-optGaitParams = [x(1) x(2) 0.0 0.0 0.0 0.0 0.0];
+optGaitParams = [x(1) x(2) 0.009 0.0 0.0 0.0 0.0];
 disp('New Gait Parameters')
 disp(optGaitParams)
 %optGaitParams = [dutyFactor, period, thetaDown, thetaSlow, Kp, Kd];
 %gait used for recentering
 %regGaitParams = [height extMin];
-regGaitParams = [2 0.4 0.0 0.0 0.0 0.0 0.0];
-coolDownGaitParams = [0.45 0.4 0.0 0.0 0.0 0.0 0.0];
+regGaitParams = [2 0.4 0.009 0.0 0.0 0.0 0.0];
+coolDownGaitParams = [0.45 0.4 0.009 0.0 0.0 0.0 0.0];
 optState = 'restart';
 maxTempVal = 70.0;
 restartTempVal = 45.0;
