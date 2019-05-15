@@ -41,6 +41,7 @@ while(trialActive)
     
     try
         if handles.tcpObj.BytesAvailable >= 20
+            pack = recvData_sync(handles.tcpObj);
             tcpData = fread(handles.tcpObj,5,'float32');
             while handles.tcpObj.BytesAvailable > 100
                 tcpData = fread(handles.tcpObj,5,'float32');
