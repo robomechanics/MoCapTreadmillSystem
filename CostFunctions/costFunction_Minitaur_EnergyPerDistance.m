@@ -41,9 +41,8 @@ while(trialActive)
     
     try
         %try to get Minitaur Data
-        pack = recvData_sync(handles.tcpObj);
-        
-        if ~isempty(pack)
+        tcpData = recvData_sync(handles.tcpObj);
+        if ~isempty(tcpData)
             %set values
             voltage = tcpData(1);
             current = tcpData(2);
@@ -70,8 +69,6 @@ while(trialActive)
 %             disp(handles.tcpObj.BytesAvailable)
 %         end
     catch
-        disp('failed to read')
-        disp(handles.tcpObj.BytesAvailable)
         continue;
     end
     

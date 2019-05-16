@@ -1,5 +1,6 @@
 function pack = recvData_sync(tcpObj)
 pack = [];
+tcpData_uint8 = [];
 val = tcpObj.BytesAvailable;
 if val > 0
     try
@@ -24,7 +25,10 @@ if val > 0
             end
         end
     catch
-        disp('Read failed in recvData_sync')
+%         disp('Read failed in recvData_sync')
+%         if ~isempty(tcpData_uint8)
+%             disp(tcpData_uint8)
+%         end
     end        
 end
 
