@@ -1,16 +1,31 @@
 function pack = recvData_sync(tcpObj)
-
-if tcpObj.BytesAvailable > 0
-    val = tcpObj.ValuesRevecied
-    tcpData = fread(tcpObj,val,'float32');
+pack = [];
+val = tcpObj.BytesAvailable;
+if val > 0
+    try
+        tcpData_uint8 = fread(tcpObj,val,'char');
+        tcpData_char = char(tcpData_uint8);
+        tcpData_str = cellstr(tcpData_char');
+        chunks = split(tcpData_str,'RM');
+        lenC = length(chunks);
+        for ii = 1:lenC
+            %grab current chunk
+            chunk = uint8(chunks{lenC-ii+1});
+            %separate data and checksum
+            data = chunk(1:end-2);
+            binCheck = chunk(end-1:end);
+            checksum = typecast(binCheck,'uint16');
+            %calc checksum
+            calcChecksum = cast(sum(data),'uint16');
+            if calcChecksum == checksum
+                %save data
+                pack = typecast(data,'single');
+                break;
+            end
+        end
+    catch
+        disp('Read failed in recvData_sync')
+    end        
 end
 
-chunks = split(tcpData,'RM')
-
-for ii = 1:length(chunks)
-    if length(chunks(ii)) > 0
-    end
-end
-
-pack = 0;
         
