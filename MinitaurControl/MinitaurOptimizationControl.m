@@ -90,8 +90,9 @@ handles.P6 = 0.0;
 handles.P7 = 0.0;
 handles.numOptVars = 2;
 handles.maxNumOptVars = 7;
-handles.PUpBound = [2.5 .5 99999 99999 99999 99999 99999];
+handles.PUpBound = [3 1 99999 99999 99999 99999 99999];
 handles.PLowBound = [1 0 -99999 -99999 -99999 -99999 -99999];
+handles.simplexDelta = [0.5 0.2];
 %Treadmill Refernces
 handles.zRef = 0.48;
 handles.yawRef = 0.0;
@@ -229,7 +230,8 @@ costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
 
 % run optimization
 if handles.mode == 3
-    [finalGait, finalCost] = fminsearch(costFunc,x0);
+    options = ['TolFun', .1, 'TolX', 0.1];
+    [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,x0,handles.simplexDelta,options);
 elseif handles.mode == 4
     [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex);
 else
