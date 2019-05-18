@@ -3,14 +3,14 @@ function cost = costFunction_Minitaur_EnergyPerDistance(x, hObject)
 
 handles = guidata(hObject);
 
-optGaitParams = [x(1) x(2) 0.009 0.0 0.0 0.0 0.0];
+optGaitParams = [x(1) x(2) 0.009 0.1 0.0 0.0 0.0];
 disp('New Gait Parameters')
 disp(optGaitParams)
 %optGaitParams = [dutyFactor, period, thetaDown, thetaSlow, Kp, Kd];
 %gait used for recentering
 %regGaitParams = [height extMin];
-regGaitParams = [2 0.4 0.009 0.0 0.0 0.0 0.0];
-coolDownGaitParams = [0.45 0.4 0.009 0.0 0.0 0.0 0.0];
+regGaitParams = [2 0.45 0.009 0.1 0.0 0.0 0.0];
+coolDownGaitParams = [0.45 0.4 0.009 0.1 0.0 0.0 0.0];
 optState = 'restart';
 maxTempVal = 70.0;
 restartTempVal = 45.0;
@@ -221,7 +221,12 @@ while(trialActive)
                 diff2 = 0;
             end
             
-            cost = 100*diff1+100*diff2;
+            cost = 10e12*diff1+10e12*diff2;
+            [rows,cols] = size(handles.optData, 'cost');
+            handles.optData.cost(rows+1,:) = cost;
+            handles.optData.gait(rows+1,:) = optGaitParams;
+            disp('Cost')
+            disp(cost)
             
         case 'coolDown' %motor temps to high, let them cool down    
             disp('cooldown')
