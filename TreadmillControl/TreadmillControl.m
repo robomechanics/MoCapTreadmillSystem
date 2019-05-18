@@ -70,8 +70,8 @@ t = 0;
 
 % Init Optitrack Controller Gains
 handles.Kp = 1.5;
-handles.Kd = 0.1;
-handles.Ki = 0.11;
+handles.Kd = 0.07;
+handles.Ki = 0.09;
 %miniRHex Controller Gains
 %Kp = 2.0, Kd = 0.05, Ki = 0.1 %old gains, controller has changed since
 

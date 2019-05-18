@@ -96,8 +96,8 @@ handles.simplexDelta = [0.5 0.2];
 %Treadmill Refernces
 handles.zRef = 0.48;
 handles.yawRef = 0.0;
-handles.yawCenterLimit = 1.5; %deg
-handles.zCenterLimit = 0.02; %meters
+handles.yawCenterLimit = 3; %deg
+handles.zCenterLimit = 0.1; %meters
 %Optimization Trial Variables
 handles.timeToSS = 2.0; %sec
 handles.trialLength = 15.0; %secs
