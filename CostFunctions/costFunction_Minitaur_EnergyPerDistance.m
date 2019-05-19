@@ -12,8 +12,8 @@ disp(optGaitParams)
 regGaitParams = [2 0.45 0.009 0.1 0.0 0.0 0.0];
 coolDownGaitParams = [0.45 0.4 0.009 0.1 0.0 0.0 0.0];
 optState = 'restart';
-maxTempVal = 70.0;
-restartTempVal = 45.0;
+maxTempVal = 85.0;
+restartTempVal = 50.0;
 
 %init tcp data
 voltage = 0.0;
@@ -93,12 +93,12 @@ while(trialActive)
             pTimeLast = pTime;
             handles.restartOpt = false;
             optState = 'recenter';
+            handles.trialData = clearTrialRecord(handles.trialData);
                
         case 'pause' % pause trial
             %stop robot and set regular params
             cmdPacket = [0.0 0.0 regGaitParams ];
             sendData_sync(handles.tcpObj, cmdPacket);
-            %fwrite(handles.tcpObj, cmdPacket,'double');
             
             if ~handles.pauseOpt 
                 optState = lastState;
@@ -178,6 +178,10 @@ while(trialActive)
 
             % check if trial is complete & update robot
             if totalTime >= handles.trialLength
+                %stop optimization gait
+                cmdPacket = [0.0 0.0 optGaitParams];
+                sendData_sync(handles.tcpObj, cmdPacket);
+                
                 cost = totalEnergy/totalDist;
                 [rows,cols] = size(handles.optData, 'cost');
                 handles.optData.cost(rows+1,:) = cost;
@@ -186,10 +190,11 @@ while(trialActive)
                 disp(cost)
                 trialActive = false;
                 
-                %stop optimization gait
-                cmdPacket = [0.0 0.0 optGaitParams];
-                sendData_sync(handles.tcpObj, cmdPacket);
-                %fwrite(handles.tcpObj, cmdPacket,'double');
+                if cost < handles.recordThresh
+                    rec = initTrialRecord(['trialData_' num2str(rows+1)]);
+                    rec = handles.trialData;
+                end
+
             else
                 %command optimization gait
                 cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];
@@ -221,12 +226,12 @@ while(trialActive)
                 diff2 = 0;
             end
             
-            cost = 10e12*diff1+10e12*diff2;
+            cost = 10e6*diff1+10e6*diff2;
             [rows,cols] = size(handles.optData, 'cost');
             handles.optData.cost(rows+1,:) = cost;
             handles.optData.gait(rows+1,:) = optGaitParams;
             disp('Cost')
-            disp(cost)
+            disp(cost)               
             
         case 'coolDown' %motor temps to high, let them cool down    
             disp('cooldown')

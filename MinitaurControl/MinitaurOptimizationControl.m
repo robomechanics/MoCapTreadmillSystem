@@ -93,6 +93,7 @@ handles.maxNumOptVars = 7;
 handles.PUpBound = [3 0.7 99999 99999 99999 99999 99999];
 handles.PLowBound = [1 0.15 -99999 -99999 -99999 -99999 -99999];
 handles.simplexDelta = [0.5 -0.5];
+handles.recordThresh = 300;
 %Treadmill Refernces
 handles.zRef = 0.48;
 handles.yawRef = 0.0;
@@ -121,9 +122,9 @@ handles.trialDataFile = 'trialData';
 
 % Read in old simplex - used for Cont. Gait Opt only
 % TODO: add load in after selecting Cont Gait Opt
-%load('simplex.mat', 'simplex');
-%handles.simplex = simplex;
-handles.simplex = [];
+load('simplex.mat', 'simplex');
+handles.simplex = simplex;
+%handles.simplex = [];
 
 % Update gui displays
 set(handles.editZRef, 'String', handles.zRef);
@@ -228,13 +229,13 @@ x0 = [handles.P1 handles.P2];
 % create anonymous function for x
 costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
 
+options.TolFun = 100;
+options.TolX = 0.1;
 % run optimization
 if handles.mode == 3
-    options.TolFun = 100;
-    options.TolX = 0.1;
     [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,x0,handles.simplexDelta,options);
 elseif handles.mode == 4
-    [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex);
+    [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex,options);
 else
     warning('ERROR: handles.mode at incorrect values for gait opt');
     finalGait = [0 0];
