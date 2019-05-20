@@ -190,7 +190,7 @@ while(trialActive)
                 disp(cost)
                 trialActive = false;
                 
-                if cost < handles.recordThresh
+                if cost < handles.recordThresh && handles.recordTrial
                     rec = initTrialRecord(['trialData_' num2str(rows+1)]);
                     rec = handles.trialData;
                 end

@@ -56,7 +56,7 @@ function MinitaurOptimizationControl_OpeningFcn(hObject, eventdata, handles, var
 % USER INPUTS
 % set to false to run gui without Optitrack Connection, for debugging only
 handles.optiDataConnection = true;
-handles.recordTrial = false;
+handles.recordTrial = true;
 %elliePi IP Address and Port
 serverAddress = '128.237.228.243';
 port = 50000;
