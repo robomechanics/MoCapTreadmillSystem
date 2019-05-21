@@ -98,10 +98,10 @@ handles.recordThresh = 300;
 handles.zRef = 0.48;
 handles.yawRef = 0.0;
 handles.yawCenterLimit = 3; %deg
-handles.zCenterLimit = 0.1; %meters
+handles.zCenterLimit = 0.05; %meters
 %Optimization Trial Variables
 handles.timeToSS = 5.0; %sec
-handles.trialLength = 25.0; %secs
+handles.trialLength = 20.0; %secs
 handles.reverseDirection = true; %reverse positive direction of treadmill (for running backwards)
 
 % Set initial gain values
@@ -229,8 +229,8 @@ x0 = [handles.P1 handles.P2];
 % create anonymous function for x
 costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
 
-options.TolFun = 100;
-options.TolX = 0.1;
+options.TolFun = 20;
+options.TolX = 0.01;
 % run optimization
 if handles.mode == 3
     [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,x0,handles.simplexDelta,options);
@@ -250,6 +250,11 @@ disp(finalCost);
 
 %restart timer
 start(handles.t_update);
+
+%stop Opt and set to manual control
+handles.robotOn = false;
+handles.mode = 2;
+
 
 % Update handles structure
 guidata(hObject, handles);
