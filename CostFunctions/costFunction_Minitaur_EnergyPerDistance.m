@@ -16,11 +16,13 @@ maxTempVal = 70.0;
 restartTempVal = 45.0;
 
 %init tcp data
-voltage = 0.0;
-current = 0.0;
-pTime = 0.0;
+%voltage = 0.0;
+%current = 0.0;
+%pTime = 0.0;
 motorTempFlag = 0;
 maxMotorTemp = 0.0;
+totEng = 0.0;
+startEnergy = [];
 
 %check if params are in bounds
 if x(1) < handles.PLowBound(1) || x(1) > handles.PUpBound(1) || x(2) < handles.PLowBound(2) || x(2) > handles.PUpBound(2)
@@ -44,11 +46,12 @@ while(trialActive)
         tcpData = recvData_sync(handles.tcpObj);
         if ~isempty(tcpData)
             %set values
-            voltage = tcpData(1);
-            current = tcpData(2);
-            pTime = tcpData(3);
-            motorTempFlag = tcpData(4);
-            maxMotorTemp = tcpData(5);
+%             voltage = tcpData(1);
+%             current = tcpData(2);
+%             pTime = tcpData(3);
+            totEng = tcpData(1);
+            motorTempFlag = tcpData(2);
+            maxMotorTemp = tcpData(3);
         end
         
 %         if handles.tcpObj.BytesAvailable > 0
@@ -90,7 +93,9 @@ while(trialActive)
             totalTime = 0.0;
             totalDist = 0.0;
             totalEnergy = 0.0;
-            pTimeLast = pTime;
+            totEng = 0.0;
+            startEnergy = [];
+            %pTimeLast = pTime;
             handles.restartOpt = false;
             optState = 'recenter';
                
@@ -148,6 +153,10 @@ while(trialActive)
             end
 
         case 'trialRecord' % Record trial and calculate cost
+            if isempty(startEnergy)
+                startEnergy = totEng;
+            end
+            
             % Calculate yaw command and check if centered on treadmill
             [cmdData, handles] = calcYawCmd(handles);
             
@@ -161,19 +170,20 @@ while(trialActive)
             % Calculate total time and distance
             totalTime = totalTime + dt;
             totalDist = totalDist + dist;
-            pdt = pTime - pTimeLast;
-            currEnergy = voltage*current*pdt;
-            totalEnergy = totalEnergy + currEnergy;
+%             pdt = pTime - pTimeLast;
+%             currEnergy = voltage*current*pdt;
+            totalEnergy = totEng - startEnergy;
+            %totalEnergy = totalEnergy + currEnergy;
 
             if handles.recordTrial
                 [rows,cols] = size(handles.trialData, 'dt');
                 handles.trialData.dt(rows+1,:) = dt;
                 handles.trialData.dist(rows+1,:) = dist;
-                handles.trialData.energy(rows+1,:) = currEnergy;
-                handles.trialData.voltage(rows+1,:) = voltage;
-                handles.trialData.current(rows+1,:) = current;
+%                 handles.trialData.energy(rows+1,:) = currEnergy;
+%                 handles.trialData.voltage(rows+1,:) = voltage;
+%                 handles.trialData.current(rows+1,:) = current;
                 handles.trialData.totalEnergy(rows+1,:) = totalEnergy;
-                handles.trialData.pdt(rows+1,:) = pdt;
+                %handles.trialData.pdt(rows+1,:) = pdt;
             end
 
             % check if trial is complete & update robot

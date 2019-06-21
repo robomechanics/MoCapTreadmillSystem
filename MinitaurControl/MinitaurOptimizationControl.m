@@ -414,11 +414,11 @@ case 'Gait Optimization'
         handles.trialData = matfile(handles.trialDataFile, 'Writable', true);
         handles.trialData.dt = 0;
         handles.trialData.dist = 0;
-        handles.trialData.energy = 0;
-        handles.trialData.voltage = 0;
-        handles.trialData.current = 0;
+%         handles.trialData.energy = 0;
+%         handles.trialData.voltage = 0;
+%         handles.trialData.current = 0;
         handles.trialData.totalEnergy = 0;
-        handles.trialData.pdt = 0;
+%         handles.trialData.pdt = 0;
     end
 case 'Cont. Gait Optimization'
     handles.mode = 4;
@@ -429,11 +429,11 @@ case 'Cont. Gait Optimization'
         handles.trialData = matfile(handles.trialDataFile, 'Writable', true);
         handles.trialData.dt = 0;
         handles.trialData.dist = 0;
-        handles.trialData.energy = 0;
-        handles.trialData.voltage = 0;
-        handles.trialData.current = 0;
+%         handles.trialData.energy = 0;
+%         handles.trialData.voltage = 0;
+%         handles.trialData.current = 0;
         handles.trialData.totalEnergy = 0;
-        handles.trialData.pdt = 0;
+%         handles.trialData.pdt = 0;
     end
 end
 guidata(hObject, handles);
