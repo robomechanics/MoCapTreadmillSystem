@@ -73,7 +73,7 @@ if nargin==1 && nargout <= 1 && strcmpi(funfcn,'defaults')
     return
 end
 
-if nargin<3, options = []; end
+if nargin<4, options = []; end
 
 % Detect problem structure input
 if nargin == 1

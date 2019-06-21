@@ -3,17 +3,17 @@ function cost = costFunction_Minitaur_EnergyPerDistance(x, hObject)
 
 handles = guidata(hObject);
 
-optGaitParams = [x(1) x(2) 0.009 0.0 0.0 0.0 0.0];
+optGaitParams = [x(1) x(2) 0.009 0.1 0.0 0.0 0.0];
 disp('New Gait Parameters')
 disp(optGaitParams)
 %optGaitParams = [dutyFactor, period, thetaDown, thetaSlow, Kp, Kd];
 %gait used for recentering
 %regGaitParams = [height extMin];
-regGaitParams = [2 0.4 0.009 0.0 0.0 0.0 0.0];
-coolDownGaitParams = [0.45 0.4 0.009 0.0 0.0 0.0 0.0];
+regGaitParams = [2 0.45 0.009 0.1 0.0 0.0 0.0];
+coolDownGaitParams = [0.45 0.4 0.009 0.1 0.0 0.0 0.0];
 optState = 'restart';
-maxTempVal = 70.0;
-restartTempVal = 45.0;
+maxTempVal = 85.0;
+restartTempVal = 50.0;
 
 %init tcp data
 %voltage = 0.0;
@@ -98,12 +98,12 @@ while(trialActive)
             %pTimeLast = pTime;
             handles.restartOpt = false;
             optState = 'recenter';
+            handles.trialData = clearTrialRecord(handles.trialData);
                
         case 'pause' % pause trial
             %stop robot and set regular params
             cmdPacket = [0.0 0.0 regGaitParams ];
             sendData_sync(handles.tcpObj, cmdPacket);
-            %fwrite(handles.tcpObj, cmdPacket,'double');
             
             if ~handles.pauseOpt 
                 optState = lastState;
@@ -167,6 +167,11 @@ while(trialActive)
                 dist = -dist;
             end
             
+            if current < 0.0 || voltage < 0.0
+                voltage = voltageLast;
+                current = currentLast;
+            end
+            
             % Calculate total time and distance
             totalTime = totalTime + dt;
             totalDist = totalDist + dist;
@@ -188,6 +193,10 @@ while(trialActive)
 
             % check if trial is complete & update robot
             if totalTime >= handles.trialLength
+                %stop optimization gait
+                cmdPacket = [0.0 0.0 optGaitParams];
+                sendData_sync(handles.tcpObj, cmdPacket);
+                
                 cost = totalEnergy/totalDist;
                 [rows,cols] = size(handles.optData, 'cost');
                 handles.optData.cost(rows+1,:) = cost;
@@ -196,24 +205,31 @@ while(trialActive)
                 disp(cost)
                 trialActive = false;
                 
+                if cost < handles.recordThresh && handles.recordTrial
+                    rec = initTrialRecord(['trialData_' num2str(rows+1)]);
+                    [rows,cols] = size(handles.trialData, 'dt');
+                    rec.dt = handles.trialData.dt;
+                    rec.dist = handles.trialData.dist;
+                    rec.energy= handles.trialData.energy;
+                    rec.voltage = handles.trialData.voltage;
+                    rec.current = handles.trialData.current;
+                    rec.totalEnergy = handles.trialData.totalEnergy;
+                    rec.pdt = handles.trialData.pdt;
+                end
                 %stop optimization gait
-                cmdPacket = [0.0 0.0 optGaitParams];
+                cmdPacket = [0.0 0.0 regGaitParams];
                 sendData_sync(handles.tcpObj, cmdPacket);
-                %fwrite(handles.tcpObj, cmdPacket,'double');
+
             else
                 %command optimization gait
                 cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];
                 sendData_sync(handles.tcpObj, cmdPacket);
-                %fwrite(handles.tcpObj, cmdPacket,'double');
             end
         case 'fail' %Case out of bounds, return high cost
             
             %stop optimization gait
             cmdPacket = [0.0 0.0 regGaitParams];
             sendData_sync(handles.tcpObj, cmdPacket);
-            %fwrite(handles.tcpObj, cmdPacket,'double');
-            
-            trialActive = false;
             
             if x(1) < handles.PLowBound(1)
                 diff1 = handles.PLowBound(1) - x(1); 
@@ -231,7 +247,14 @@ while(trialActive)
                 diff2 = 0;
             end
             
-            cost = 100*diff1+100*diff2;
+            cost = 104*diff1+104*diff2+10000;
+            [rows,cols] = size(handles.optData, 'cost');
+            handles.optData.cost(rows+1,:) = cost;
+            handles.optData.gait(rows+1,:) = optGaitParams;
+            disp('Cost')
+            disp(cost)
+            
+            trialActive = false;
             
         case 'coolDown' %motor temps to high, let them cool down    
             disp('cooldown')
@@ -246,6 +269,8 @@ while(trialActive)
     end
     
     pTimeLast = pTime;
+    voltageLast = voltage;
+    currentLast = current;
     
     % Update handles structure
     guidata(hObject, handles);

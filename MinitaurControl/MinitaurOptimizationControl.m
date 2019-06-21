@@ -56,7 +56,7 @@ function MinitaurOptimizationControl_OpeningFcn(hObject, eventdata, handles, var
 % USER INPUTS
 % set to false to run gui without Optitrack Connection, for debugging only
 handles.optiDataConnection = true;
-handles.recordTrial = false;
+handles.recordTrial = true;
 %elliePi IP Address and Port
 serverAddress = '128.237.228.243';
 port = 50000;
@@ -84,23 +84,24 @@ handles.stHgt = 0.0;
 handles.P1 = 2.0; % stance height (extDes)
 handles.P2 = 0.45; % min extenion in retraction (extMin)
 handles.P3 = 0.009;
-handles.P4 = 0.0;
+handles.P4 = 0.1;
 handles.P5 = 0.0;
 handles.P6 = 0.0;
 handles.P7 = 0.0;
 handles.numOptVars = 2;
 handles.maxNumOptVars = 7;
-handles.PUpBound = [3 1 99999 99999 99999 99999 99999];
-handles.PLowBound = [1 0 -99999 -99999 -99999 -99999 -99999];
-handles.simplexDelta = [0.5 0.2];
+handles.PUpBound = [3 0.7 99999 99999 99999 99999 99999];
+handles.PLowBound = [1 0.15 -99999 -99999 -99999 -99999 -99999];
+handles.simplexDelta = [0.5 -0.5];
+handles.recordThresh = 300;
 %Treadmill Refernces
 handles.zRef = 0.48;
 handles.yawRef = 0.0;
 handles.yawCenterLimit = 3; %deg
-handles.zCenterLimit = 0.1; %meters
+handles.zCenterLimit = 0.05; %meters
 %Optimization Trial Variables
-handles.timeToSS = 2.0; %sec
-handles.trialLength = 15.0; %secs
+handles.timeToSS = 5.0; %sec
+handles.trialLength = 20.0; %secs
 handles.reverseDirection = true; %reverse positive direction of treadmill (for running backwards)
 
 % Set initial gain values
@@ -121,9 +122,9 @@ handles.trialDataFile = 'trialData';
 
 % Read in old simplex - used for Cont. Gait Opt only
 % TODO: add load in after selecting Cont Gait Opt
-%load('simplex.mat', 'simplex');
-%handles.simplex = simplex;
-handles.simplex = [];
+load('simplex.mat', 'simplex');
+handles.simplex = simplex;
+%handles.simplex = [];
 
 % Update gui displays
 set(handles.editZRef, 'String', handles.zRef);
@@ -228,12 +229,13 @@ x0 = [handles.P1 handles.P2];
 % create anonymous function for x
 costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
 
+options.TolFun = 20;
+options.TolX = 0.01;
 % run optimization
 if handles.mode == 3
-    options = ['TolFun', .1, 'TolX', 0.1];
     [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,x0,handles.simplexDelta,options);
 elseif handles.mode == 4
-    [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex);
+    [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex,options);
 else
     warning('ERROR: handles.mode at incorrect values for gait opt');
     finalGait = [0 0];
@@ -248,6 +250,11 @@ disp(finalCost);
 
 %restart timer
 start(handles.t_update);
+
+%stop Opt and set to manual control
+handles.robotOn = false;
+handles.mode = 2;
+
 
 % Update handles structure
 guidata(hObject, handles);
