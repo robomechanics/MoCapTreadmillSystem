@@ -167,17 +167,25 @@ while(trialActive)
                 dist = -dist;
             end
             
-            if current < 0.0 || voltage < 0.0
-                voltage = voltageLast;
-                current = currentLast;
-            end
+%             if current < 0.0 || voltage < 0.0
+%                 voltage = voltageLast;
+%                 current = currentLast;
+%             end
             
             % Calculate total time and distance
             totalTime = totalTime + dt;
             totalDist = totalDist + dist;
 %             pdt = pTime - pTimeLast;
 %             currEnergy = voltage*current*pdt;
-            totalEnergy = totEng - startEnergy;
+            if totEng < startEnergy
+                %check if float wrapped around (assuming this will only
+                %happen once per trial max)
+                totalEnergy = totEng +(realmax('single') - startEnergy);
+                disp('wrap happened')
+            else
+                totalEnergy = totEng - startEnergy;
+            end
+                
             %totalEnergy = totalEnergy + currEnergy;
 
             if handles.recordTrial
@@ -204,17 +212,18 @@ while(trialActive)
                 disp('Cost')
                 disp(cost)
                 trialActive = false;
+                startEnergy = [];
                 
                 if cost < handles.recordThresh && handles.recordTrial
                     rec = initTrialRecord(['trialData_' num2str(rows+1)]);
                     [rows,cols] = size(handles.trialData, 'dt');
                     rec.dt = handles.trialData.dt;
                     rec.dist = handles.trialData.dist;
-                    rec.energy= handles.trialData.energy;
-                    rec.voltage = handles.trialData.voltage;
-                    rec.current = handles.trialData.current;
+                    %rec.energy= handles.trialData.energy;
+                    %rec.voltage = handles.trialData.voltage;
+                    %rec.current = handles.trialData.current;
                     rec.totalEnergy = handles.trialData.totalEnergy;
-                    rec.pdt = handles.trialData.pdt;
+                    %rec.pdt = handles.trialData.pdt;
                 end
                 %stop optimization gait
                 cmdPacket = [0.0 0.0 regGaitParams];
@@ -268,9 +277,9 @@ while(trialActive)
 
     end
     
-    pTimeLast = pTime;
-    voltageLast = voltage;
-    currentLast = current;
+    %pTimeLast = pTime;
+    %voltageLast = voltage;
+    %currentLast = current;
     
     % Update handles structure
     guidata(hObject, handles);
