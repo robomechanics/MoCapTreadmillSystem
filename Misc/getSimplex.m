@@ -1,4 +1,4 @@
-load('optData.mat');
+%load('optData.mat');
 [cost, ii] = sort(cost);
 gait = gait(ii,:);
 tempG = gait(2:8,:);
