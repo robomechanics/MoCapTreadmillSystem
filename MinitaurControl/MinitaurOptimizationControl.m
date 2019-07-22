@@ -81,18 +81,18 @@ handles.fwdVel = 0.0;
 handles.angVel = 0.0;
 handles.stHgt = 0.0;
 %Optimization Variables
-handles.P1 = 2.0; % stance height (extDes)
-handles.P2 = 0.45; % min extenion in retraction (extMin)
-handles.P3 = 0.009;
-handles.P4 = 0.1;
-handles.P5 = 0.0;
+handles.P1 = -0.5; %speed (want to walk backwards)
+handles.P2 = 1.5; %stance height
+handles.P3 = 0.3; %Kp Stance
+handles.P4 = 0.02; %Kd Stance
+handles.P5 = 0.15; %TD open gain
 handles.P6 = 0.0;
 handles.P7 = 0.0;
-handles.numOptVars = 2;
+handles.numOptVars = 5;
 handles.maxNumOptVars = 7;
-handles.PUpBound = [3 0.7 99999 99999 99999 99999 99999];
-handles.PLowBound = [1 0.15 -99999 -99999 -99999 -99999 -99999];
-handles.simplexDelta = [0.5 -0.5];
+handles.PUpBound =  [-1   3 1    .2    1    99999  99999];
+handles.PLowBound = [-0.1 1 0.01 0.001 0.01 -99999 -99999];
+handles.simplexDelta = [0.3 0.5 0.5 0.1 0.1]; %variation from start values for initial simplex (%)
 handles.recordThresh = 300;
 %Treadmill Refernces
 handles.zRef = 0.48;
@@ -100,8 +100,8 @@ handles.yawRef = 0.0;
 handles.yawCenterLimit = 3; %deg
 handles.zCenterLimit = 0.05; %meters
 %Optimization Trial Variables
-handles.timeToSS = 5.0; %sec
-handles.trialLength = 20.0; %secs
+handles.timeToSS = 2.0; %sec
+handles.trialLength = 15.0; %secs
 handles.reverseDirection = true; %reverse positive direction of treadmill (for running backwards)
 
 % Set initial gain values

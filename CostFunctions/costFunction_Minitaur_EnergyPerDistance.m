@@ -3,14 +3,13 @@ function cost = costFunction_Minitaur_EnergyPerDistance(x, hObject)
 
 handles = guidata(hObject);
 
-optGaitParams = [x(1) x(2) 0.009 0.1 0.0 0.0 0.0];
+optGaitParams = [x(1) x(2) x(3) x(4) x(5) 0.0 0.0];
 disp('New Gait Parameters')
 disp(optGaitParams)
-%optGaitParams = [dutyFactor, period, thetaDown, thetaSlow, Kp, Kd];
 %gait used for recentering
-%regGaitParams = [height extMin];
-regGaitParams = [2 0.45 0.009 0.1 0.0 0.0 0.0];
-coolDownGaitParams = [0.45 0.4 0.009 0.1 0.0 0.0 0.0];
+%regGaitParams = [speed stanceHeight KpStance KdStance tdOpenLoopGain];
+regGaitParams = [-0.3 1.5 0.3 0.02 0.15 0.0 0.0];
+coolDownGaitParams = [0.0 0.45 0.3 0.02 0.15 0.0 0.0];
 optState = 'restart';
 maxTempVal = 85.0;
 restartTempVal = 50.0;
@@ -138,10 +137,10 @@ while(trialActive)
             %fwrite(handles.tcpObj, cmdPacket,'double');
 
             % Get treadmill data
-            [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
+            [dist, dt] = getTreadData(handles.memTread, handles.treadSize)
             
             % Calculate total time
-            totalTime = totalTime + dt;
+            totalTime = totalTime + dt
                 
             %start recording once at steady state
             if totalTime >= handles.timeToSS
@@ -228,7 +227,7 @@ while(trialActive)
                 %stop optimization gait
                 cmdPacket = [0.0 0.0 regGaitParams];
                 sendData_sync(handles.tcpObj, cmdPacket);
-
+                disp('done')
             else
                 %command optimization gait
                 cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];
