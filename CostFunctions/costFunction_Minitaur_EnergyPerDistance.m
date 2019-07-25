@@ -8,8 +8,9 @@ disp('New Gait Parameters')
 disp(optGaitParams)
 %gait used for recentering
 %regGaitParams = [speed stanceHeight KpStance KdStance tdOpenLoopGain];
-regGaitParams = [-0.3 1.5 0.3 0.02 0.15 0.0 0.0];
+regGaitParams = [-0.4 2.0 0.3 0.02 0.15 0.0 0.0];
 coolDownGaitParams = [0.0 0.45 0.3 0.02 0.15 0.0 0.0];
+stopGaitParams = [0.0 1.5 0.3 0.02 0.15 0.0 0.0];
 optState = 'restart';
 maxTempVal = 85.0;
 restartTempVal = 50.0;
@@ -24,7 +25,11 @@ totEng = 0.0;
 startEnergy = [];
 
 %check if params are in bounds
-if x(1) < handles.PLowBound(1) || x(1) > handles.PUpBound(1) || x(2) < handles.PLowBound(2) || x(2) > handles.PUpBound(2)
+if x(1) < handles.PLowBound(1) || x(1) > handles.PUpBound(1) ...
+        || x(2) < handles.PLowBound(2) || x(2) > handles.PUpBound(2) ...
+        || x(3) < handles.PLowBound(3) || x(3) > handles.PUpBound(3) ...
+        || x(4) < handles.PLowBound(4) || x(4) > handles.PUpBound(4) ...
+        || x(5) < handles.PLowBound(5) || x(5) > handles.PUpBound(5)
     optState = 'fail';
 else
     optState = 'restart';
@@ -101,7 +106,7 @@ while(trialActive)
                
         case 'pause' % pause trial
             %stop robot and set regular params
-            cmdPacket = [0.0 0.0 regGaitParams ];
+            cmdPacket = [0.0 0.0 stopGaitParams ];
             sendData_sync(handles.tcpObj, cmdPacket);
             
             if ~handles.pauseOpt 
@@ -137,10 +142,10 @@ while(trialActive)
             %fwrite(handles.tcpObj, cmdPacket,'double');
 
             % Get treadmill data
-            [dist, dt] = getTreadData(handles.memTread, handles.treadSize)
+            [dist, dt] = getTreadData(handles.memTread, handles.treadSize);
             
             % Calculate total time
-            totalTime = totalTime + dt
+            totalTime = totalTime + dt;
                 
             %start recording once at steady state
             if totalTime >= handles.timeToSS
@@ -227,7 +232,6 @@ while(trialActive)
                 %stop optimization gait
                 cmdPacket = [0.0 0.0 regGaitParams];
                 sendData_sync(handles.tcpObj, cmdPacket);
-                disp('done')
             else
                 %command optimization gait
                 cmdPacket = [handles.fwdVel cmdData.cmd optGaitParams];

@@ -87,7 +87,7 @@ handles.treadLength = 2.0320/2; %meters (80in)
 handles.treadWidth = 1.0160/2; %meters (40in)
 
 % Init Deadbands
-handles.posDeadband = 0.2; %meters
+handles.posDeadband = 0.05; %meters
 handles.velDeadband = 0.05; %meters
 
 % Init Command Limits
@@ -217,12 +217,12 @@ if handles.memMoCap.Data(1) == (handles.moCapSize-1)
                     posCmd = 0.0;
                     pastDeadband = false;
                 else
-                    posCmd = Kp * eX -sign(eX)*handles.posDeadband;
+                    posCmd = Kp * (eX -sign(eX)*handles.posDeadband);
                 end
             else
                 if abs(eX) >= handles.posDeadband
                     pastDeadband = true;
-                    posCmd = Kp * eX -sign(eX)*handles.posDeadband;
+                    posCmd = Kp * (eX -sign(eX)*handles.posDeadband);
                 else
                     posCmd = 0.0;
                 end
@@ -231,7 +231,7 @@ if handles.memMoCap.Data(1) == (handles.moCapSize-1)
             if abs(eDotX) <= handles.velDeadband
                 velCmd = 0.0;
             else
-                velCmd = Kd*eDotX -sign(eDotX)*handles.velDeadband;
+                velCmd = Kd*(eDotX -sign(eDotX)*handles.velDeadband);
             end
             
             % absement command

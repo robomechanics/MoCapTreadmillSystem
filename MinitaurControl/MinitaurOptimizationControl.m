@@ -81,8 +81,8 @@ handles.fwdVel = 0.0;
 handles.angVel = 0.0;
 handles.stHgt = 0.0;
 %Optimization Variables
-handles.P1 = -0.5; %speed (want to walk backwards)
-handles.P2 = 1.5; %stance height
+handles.P1 = 0.0; %speed (want to walk backwards) 
+handles.P2 = 2.0; %stance height
 handles.P3 = 0.3; %Kp Stance
 handles.P4 = 0.02; %Kd Stance
 handles.P5 = 0.15; %TD open gain
@@ -90,17 +90,19 @@ handles.P6 = 0.0;
 handles.P7 = 0.0;
 handles.numOptVars = 5;
 handles.maxNumOptVars = 7;
-handles.PUpBound =  [-1   3 1    .2    1    99999  99999];
-handles.PLowBound = [-0.1 1 0.01 0.001 0.01 -99999 -99999];
-handles.simplexDelta = [0.3 0.5 0.5 0.1 0.1]; %variation from start values for initial simplex (%)
+handles.PUpBound =  [-0.1 3 1    .2    1    99999  99999];
+handles.PLowBound = [-1   1 0.01 0.001 0.01 -99999 -99999];
+handles.simplexDelta = [0.5 0.5 0.5 0.5 0.5]; %variation from start values for initial simplex (%)
 handles.recordThresh = 300;
+%initial values for optimization
+handles.x0 = [-0.4 handles.P2 handles.P3 handles.P4 handles.P5];
 %Treadmill Refernces
 handles.zRef = 0.48;
 handles.yawRef = 0.0;
 handles.yawCenterLimit = 3; %deg
 handles.zCenterLimit = 0.05; %meters
 %Optimization Trial Variables
-handles.timeToSS = 2.0; %sec
+handles.timeToSS = 4.0; %sec
 handles.trialLength = 15.0; %secs
 handles.reverseDirection = true; %reverse positive direction of treadmill (for running backwards)
 
@@ -223,9 +225,6 @@ handles = guidata(hObject);
 %stop timer to prevent interrupt during optimization
 stop(handles.t_update);
 
-% get initial values for optimization
-x0 = [handles.P1 handles.P2];
-
 % create anonymous function for x
 costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
 
@@ -233,7 +232,7 @@ options.TolFun = 20;
 options.TolX = 0.01;
 % run optimization
 if handles.mode == 3
-    [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,x0,handles.simplexDelta,options);
+    [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,handles.x0,handles.simplexDelta,options);
 elseif handles.mode == 4
     [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex,options);
 else
