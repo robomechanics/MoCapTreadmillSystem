@@ -58,7 +58,7 @@ function MinitaurOptimizationControl_OpeningFcn(hObject, eventdata, handles, var
 handles.optiDataConnection = true;
 handles.recordTrial = true;
 %elliePi IP Address and Port
-serverAddress = '128.237.228.243';
+serverAddress = '172.26.211.45';
 port = 50000;
 
 % Setup TCP connection to robot
@@ -81,35 +81,37 @@ handles.fwdVel = 0.0;
 handles.angVel = 0.0;
 handles.stHgt = 0.0;
 %Optimization Variables
-handles.P1 = 0.0; %speed (want to walk backwards) 
-handles.P2 = 2.0; %stance height
-handles.P3 = 0.3; %Kp Stance
-handles.P4 = 0.02; %Kd Stance
-handles.P5 = 0.15; %TD open gain
-handles.P6 = 0.0;
-handles.P7 = 0.0;
+handles.P1 = 2.0;   %Frequency
+handles.P2 = 50.0;  %Duty Factor
+handles.P3 = 0.12;  %Stroke Length
+handles.P4 = 40.0;  %Approach Angle
+handles.P5 = 180.0; %Extension Kp
+handles.P6 = 1.8;   %Extension Kd
+handles.P7 = 0.0;   %Not Used
 handles.numOptVars = 5;
 handles.maxNumOptVars = 7;
-handles.PUpBound =  [-0.1 3 1    .2    1    99999  99999];
-handles.PLowBound = [-1   1 0.01 0.001 0.01 -99999 -99999];
-handles.simplexDelta = [0.5 0.5 0.5 0.5 0.5]; %variation from start values for initial simplex (%)
+handles.PUpBound =  [6, 75, 0.2,  70, 200, 2.5,  99999];
+handles.PLowBound = [1, 35, 0.05, 20, 120, 0.5, -99999];
+handles.simplexDelta = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]; %variation from start values for initial simplex (%)
 handles.recordThresh = 300;
-%initial values for optimization
-handles.x0 = [-0.4 handles.P2 handles.P3 handles.P4 handles.P5];
+%initial values for optimization (used incase you need different starting
+%values for minitaur startup, ie. dont want it to start walking if
+%commanding speed, etc)
+handles.x0 = [handles.P1 handles.P2 handles.P3 handles.P4 handles.P5];
 %Treadmill Refernces
 handles.zRef = 0.48;
-handles.yawRef = 0.0;
+handles.yawRef = 2.0;
 handles.yawCenterLimit = 3; %deg
 handles.zCenterLimit = 0.05; %meters
 %Optimization Trial Variables
 handles.timeToSS = 4.0; %sec
 handles.trialLength = 15.0; %secs
-handles.reverseDirection = true; %reverse positive direction of treadmill (for running backwards)
+handles.reverseDirection = false; %reverse positive direction of treadmill (for running towards computer) (backwards in treadmill frame)
 
 % Set initial gain values
-handles.KpZpos = 0.09;
+handles.KpZpos = 0.18;
 handles.KdZpos = 0.0;
-handles.KpYaw = .001;
+handles.KpYaw = -.005;
 handles.KdYaw = 0.0;
 
 % Set shared filenames and sizes
@@ -141,11 +143,11 @@ set(handles.editP3, 'String',  handles.P3);
 set(handles.editP4, 'String',  handles.P4);
 set(handles.editP5, 'String',  handles.P5);
 set(handles.editP6, 'String',  handles.P6);
-set(handles.editP6, 'String',  handles.P7);
+set(handles.editP7, 'String',  handles.P7);
 
 % Set Manual Control Limits
 handles.fwdVelLimit = 1.0;
-handles.angVelLimit = 0.03;
+handles.angVelLimit = 0.08;
 
 % Setup shared data file for mocap and treadmill data
 if handles.optiDataConnection
@@ -169,10 +171,10 @@ start(handles.t_update);
 % uiwait(handles.figure1);
 end
 
+%Main Update Loop on timer (this is paused during optimization runs)
 function updateData(~, ~, hObject)
 %get handles struct
 handles = guidata(hObject);
-
 
 if handles.mode == 3 || handles.mode == 4
     %In Optimization mode
@@ -210,14 +212,13 @@ else
     
     %Send signal to robot
     sendData_sync(handles.tcpObj, cmdPacket);
-    %fwrite(handles.tcpObj, cmdPacket,'double');
-
 end
 
 % Update handles structure
 guidata(hObject, handles);
 end
 
+%Gait Optimization Main Function
 function gaitOptimization(hObject)
 %get handles struct
 handles = guidata(hObject);
@@ -226,7 +227,7 @@ handles = guidata(hObject);
 stop(handles.t_update);
 
 % create anonymous function for x
-costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
+costFunc = @(x)costFunction_Minitaur_speed(x,hObject);
 
 options.TolFun = 20;
 options.TolX = 0.01;
@@ -237,7 +238,7 @@ elseif handles.mode == 4
     [finalGait, finalCost] = fminsearch_simplex(costFunc,handles.simplex,options);
 else
     warning('ERROR: handles.mode at incorrect values for gait opt');
-    finalGait = [0 0];
+    finalGait = [0 0 0 0 0 0 0];
     finalCost = 0;
 end
 
@@ -247,16 +248,16 @@ disp(finalGait);
 disp('Cost of Optimized Gait Parameters');
 disp(finalCost);
 
-%restart timer
-start(handles.t_update);
-
 %stop Opt and set to manual control
 handles.robotOn = false;
 handles.mode = 2;
-
+%TODO: Update output display to show in mode 2
 
 % Update handles structure
 guidata(hObject, handles);
+
+%restart timer
+start(handles.t_update);
 end
 
 % --- Outputs from this function are returned to the command line.
@@ -420,11 +421,7 @@ case 'Gait Optimization'
         handles.trialData = matfile(handles.trialDataFile, 'Writable', true);
         handles.trialData.dt = 0;
         handles.trialData.dist = 0;
-%         handles.trialData.energy = 0;
-%         handles.trialData.voltage = 0;
-%         handles.trialData.current = 0;
         handles.trialData.totalEnergy = 0;
-%         handles.trialData.pdt = 0;
     end
 case 'Cont. Gait Optimization'
     handles.mode = 4;
@@ -435,11 +432,7 @@ case 'Cont. Gait Optimization'
         handles.trialData = matfile(handles.trialDataFile, 'Writable', true);
         handles.trialData.dt = 0;
         handles.trialData.dist = 0;
-%         handles.trialData.energy = 0;
-%         handles.trialData.voltage = 0;
-%         handles.trialData.current = 0;
         handles.trialData.totalEnergy = 0;
-%         handles.trialData.pdt = 0;
     end
 end
 guidata(hObject, handles);

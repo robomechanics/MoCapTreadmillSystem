@@ -3,7 +3,7 @@ function varargout = TreadmillControl(varargin)
 %      TREADMILLCONTROL, by itself, creates a new TREADMILLCONTROL or raises the existing
 %      singleton*.
 %
-%      H = TREADMILLCONTROL returns the handle to a new TREADMILLCONTROL or the handle to
+%      Hfind = TREADMILLCONTROL returns the handle to a new TREADMILLCONTROL or the handle to
 %      the existing singleton*.
 %
 %      TREADMILLCONTROL('CALLBACK',hObject,eventData,handles,...) calls the local
@@ -69,18 +69,18 @@ handles.rec = false;
 t = 0;
 
 % Init Optitrack Controller Gains
-handles.Kp = 1.5;
+handles.Kp = 2.0;
 handles.Kd = 0.07;
-handles.Ki = 0.09;
+handles.Ki = 0.11;
 %miniRHex Controller Gains
 %Kp = 2.0, Kd = 0.05, Ki = 0.1 %old gains, controller has changed since
 
 % Init Optitrack Reference Positions
-handles.xRef = 0.0; %meters
+handles.xRef = -0.3; %meters
 handles.yRef = 0.0; %meters
 handles.zRef = 0.0; %meters
 
-% Init Treadmill Size Info
+% Init Treadmill Size Info (shutoffs treadmill if robot outside this area)
 handles.centerX = 0.0; %meters
 handles.centerZ = 0.48; %meters
 handles.treadLength = 2.0320/2; %meters (80in)
