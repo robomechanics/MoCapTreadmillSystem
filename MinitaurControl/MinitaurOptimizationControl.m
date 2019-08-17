@@ -16,7 +16,7 @@ function varargout = MinitaurOptimizationControl(varargin)
 %      stop.  All inputs are passed to MinitaurOptimizationControl_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
+%      instance to run (singleton)"
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
@@ -56,6 +56,7 @@ function MinitaurOptimizationControl_OpeningFcn(hObject, eventdata, handles, var
 % USER INPUTS
 % set to false to run gui without Optitrack Connection, for debugging only
 handles.optiDataConnection = true;
+% Record last opt trial (for debugging)
 handles.recordTrial = true;
 %elliePi IP Address and Port
 serverAddress = '172.26.211.45';
@@ -80,39 +81,54 @@ handles.restartOpt = false;
 handles.fwdVel = 0.0;
 handles.angVel = 0.0;
 handles.stHgt = 0.0;
+
 %Optimization Variables
+%Clark Trot Gait
+handles.numOptVars = 6; %Number of Optimization Variables
+handles.maxNumOptVars = 7;%Max number of Optimization Variables
 handles.P1 = 2.0;   %Frequency
 handles.P2 = 50.0;  %Duty Factor
 handles.P3 = 0.12;  %Stroke Length
 handles.P4 = 40.0;  %Approach Angle
 handles.P5 = 180.0; %Extension Kp
 handles.P6 = 1.8;   %Extension Kd
-handles.P7 = 0.0;   %Not Used
-handles.numOptVars = 5;
-handles.maxNumOptVars = 7;
-handles.PUpBound =  [6, 75, 0.2,  70, 200, 2.5,  99999];
+handles.P7 = 0.1;   %Not Used
+%Opt Vars Upper and Lower Bounds (for barrier function)
+handles.PUpBound =  [6, 75, 0.2,  70, 250, 2.5,  99999];
 handles.PLowBound = [1, 35, 0.05, 20, 120, 0.5, -99999];
-handles.simplexDelta = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]; %variation from start values for initial simplex (%)
-handles.recordThresh = 300;
-%initial values for optimization (used incase you need different starting
-%values for minitaur startup, ie. dont want it to start walking if
-%commanding speed, etc)
-handles.x0 = [handles.P1 handles.P2 handles.P3 handles.P4 handles.P5];
+%Initial values for optimization
+handles.x0 = [handles.P1 handles.P2 handles.P3 handles.P4 handles.P5 handles.P6];
+handles.simplexDelta = [0.5, 0.1, 0.2, 0.5 0.3, 0.3]; %variation from start values for initial simplex (% of x0)
+%Gait for recentering between opt trials
+handles.regGaitParams = [2.5 50.0 0.13 40.0 180.0 1.8 0.0];
+%Gait used when motors get to hot and robot needs to cool down
+handles.coolDownGaitParams = [2.5 50.0 0.13 40.0 180.0 1.8 0.0]; %will just switch to SIT behavior
+handles.optFuncTol = 10; %Cost Function Tolerance for ending opt
+handles.optVarTol = 0.1; %Variable Tolerance for ending opt
+
+%Optimization Trial Variables
+handles.timeToSS = 5.0; %Time to Steady State (sec)
+handles.trialLength = 15.0; %Length of Opt Trial (secs)
+handles.reverseDirection = true; %reverse positive direction of treadmill (for running towards computer) (backwards in treadmill frame)
+handles.maxTempVal = 85.0; %Max Allowable Motor Temperature before CoolDown (C)
+handles.restartTempVal = 50.0; %Restart Operation Temp after CoolDown (C)
+handles.recordThresh = 210; %Cost threshold for recording good trials (Data Acquisition)
+
 %Treadmill Refernces
-handles.zRef = 0.48;
-handles.yawRef = 2.0;
+handles.zRef = 0.48; %meters
+handles.yawRef = -3.0; %deg
 handles.yawCenterLimit = 3; %deg
 handles.zCenterLimit = 0.05; %meters
-%Optimization Trial Variables
-handles.timeToSS = 4.0; %sec
-handles.trialLength = 15.0; %secs
-handles.reverseDirection = false; %reverse positive direction of treadmill (for running towards computer) (backwards in treadmill frame)
 
 % Set initial gain values
-handles.KpZpos = 0.18;
+handles.KpZpos = -0.3;
 handles.KdZpos = 0.0;
-handles.KpYaw = -.005;
+handles.KpYaw = .01;
 handles.KdYaw = 0.0;
+
+% Set Control Limits
+handles.fwdVelLimit = 1.0;
+handles.angVelLimit = 0.1;
 
 % Set shared filenames and sizes
 handles.moCapFile = 'rigidBodyData.dat';
@@ -144,10 +160,6 @@ set(handles.editP4, 'String',  handles.P4);
 set(handles.editP5, 'String',  handles.P5);
 set(handles.editP6, 'String',  handles.P6);
 set(handles.editP7, 'String',  handles.P7);
-
-% Set Manual Control Limits
-handles.fwdVelLimit = 1.0;
-handles.angVelLimit = 0.08;
 
 % Setup shared data file for mocap and treadmill data
 if handles.optiDataConnection
@@ -214,6 +226,8 @@ else
     sendData_sync(handles.tcpObj, cmdPacket);
 end
 
+handles.angVelLimit = handles.P7;
+
 % Update handles structure
 guidata(hObject, handles);
 end
@@ -227,10 +241,12 @@ handles = guidata(hObject);
 stop(handles.t_update);
 
 % create anonymous function for x
-costFunc = @(x)costFunction_Minitaur_speed(x,hObject);
+costFunc = @(x)costFunction_Minitaur_EnergyPerDistance(x,hObject);
 
-options.TolFun = 20;
-options.TolX = 0.01;
+%Set opt end conditions
+options.TolFun = handles.optFuncTol;
+options.TolX = handles.optVarTol;
+
 % run optimization
 if handles.mode == 3
     [finalGait, finalCost] = fminsearch_adjustDelta(costFunc,handles.x0,handles.simplexDelta,options);
